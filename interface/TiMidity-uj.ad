@@ -7,7 +7,7 @@ TiMidity*international: True
 TiMidity*inputMethod: none
 TiMidity*gradientBar: True
 TiMidity*highlightThickness: 1
-TiMidity*LabelFile: ファイル...
+TiMidity*fileLabel: ファイル...
 TiMidity*moreString: もっと見る...
 TiMidity*noPlaying: [ 再生ファイルなし ]
 TiMidity*file_simplemenu.load.label: ファイルのロード (Meta-N)
@@ -63,7 +63,7 @@ TiMidity*file_simplemenu.translations: #override\n\
 	<Motion>:	highlight()
 TiMidity*load_dialog.label: ファイル名
 TiMidity*load_dialog.add.label: すべてを追加
-TiMidity*load_dialog.load_button.label: フィルター
+TiMidity*load_dialog.filter.label: フィルター
 TiMidity*flist_cmdbox.fplaybutton.label: 演奏
 TiMidity*flist_cmdbox.fdeletebutton.label: 削除
 TiMidity*flist_cmdbox.fdelallbutton.label: すべてを削除
@@ -90,8 +90,10 @@ TiMidity*base_form.translations: #override\n\
 	Meta<Key>p:		do-menu(103)\n\
 	~Ctrl Meta<Key>n:	do-menu(100)\n\
 	<Key>Right:		do-next()\n\
+	:<Key>KP_Right:		do-next()\n\
 	~Ctrl ~Meta<Key>n:	do-next()\n\
 	<Key>Left:		do-prev()\n\
+	:<Key>KP_Left:		do-prev()\n\
 	~Meta<Key>p:		do-prev()\n\
 	<Key>KP_Enter:		do-play()\n\
 	<Key>Return:		do-play()\n\
@@ -101,8 +103,10 @@ TiMidity*base_form.translations: #override\n\
 	~Ctrl<Key>space:	do-pause()\n\
 	~Ctrl<Key>s:		do-stop()\n\
 	<Key>Up:		do-volupdown(10)\n\
+	:<Key>KP_Up:		do-volupdown(10)\n\
 	~Ctrl Shift<Key>v:	do-volupdown(10)\n\
 	<Key>Down:		do-volupdown(-10)\n\
+	:<Key>KP_Down:		do-volupdown(-10)\n\
 	~Ctrl ~Shift<Key>v:	do-volupdown(-10)\n\
 	<Key>KP_Add:		do-key()\n\
 	~Ctrl<Key>plus:		do-key()\n\
@@ -217,6 +221,7 @@ TiMidity*trace.vertDistance: 2
 TiMidity*trace.borderWidth: 1
 TiMidity*trace.translations: #override\n\
 	<Btn1Down>:		do-toggletrace()\n\
+	<Btn2Down>:		do-solochan()\n\
 	<Btn3Down>:		do-mutechan()\n\
 	<Btn4Down>:		changetrace(-1)\n\
 	<Btn5Down>:		changetrace(1)\n\
@@ -244,8 +249,8 @@ TiMidity*TransientShell.Box.baseTranslations: #override\n\
 TiMidity*popup_load.title: TiMidity <Load File>
 TiMidity*load_dialog.borderWidth: 0
 TiMidity*load_dialog.value.translations: #override\n\
-	<Key>Escape:			do-popdown()\n\
-	Ctrl ~Shift<Key>g:		do-popdown()\n\
+	<Key>Escape:			do-closeparent()\n\
+	Ctrl ~Shift<Key>g:		do-closeparent()\n\
 	Ctrl Meta<Key>KP_Enter:		do-addall()\n\
 	~Ctrl Meta<Key>Return:		do-addall()\n\
 	~Ctrl ~Meta<Key>Return:		do-chgdir()\n\
@@ -253,8 +258,11 @@ TiMidity*load_dialog.value.translations: #override\n\
 	<Key>BackSpace:	do-backspace() delete-previous-character()\n\
 	Ctrl<Key>H:	do-backspace() delete-previous-character()\n\
 	~Ctrl ~Meta<Key>Tab:		do-complete() end-of-line()
-TiMidity*load_dialog.load_button.accelerators: #override\n\
+TiMidity*load_dialog.filter.accelerators: #override\n\
 	Ctrl<KeyPress>`: toggle() notify()
+TiMidity*load_dialog*files.translations: #override\n\
+	<Btn1Down>, <Btn1Up>:	Set() Notify()\n\
+	<Btn1Up>(2+):		Set() notify-doubleclick()
 TiMidity*dialog_sfile*load_dialog.add.Sensitive: False
 TiMidity*dialog_list*load_dialog.add.Sensitive: False
 TiMidity*dialog_lfile.title: TiMidity <Load File>
@@ -275,15 +283,23 @@ TiMidity*popup_fform.translations: #override\n\
 	~Ctrl<Key>c:		do-closeparent()\n\
 	<Key>Escape:		do-closeparent()\n\
 	<Key>Home:		do-flistmove(-1, 0, 0)\n\
+	:<Key>KP_Home:		do-flistmove(-1, 0, 0)\n\
 	<Key>Prior:		do-flistmove(-1, 0)\n\
+	:<Key>KP_Prior:		do-flistmove(-1, 0)\n\
 	<Key>Right:		do-flistmove(-5)\n\
+	:<Key>KP_Right:		do-flistmove(-5)\n\
 	<Key>Up:		do-flistmove(-1)\n\
+	:<Key>KP_Up:		do-flistmove(-1)\n\
 	<Key>p:			do-flistmove(-1)\n\
 	<Key>n:			do-flistmove(1)\n\
 	<Key>Down:		do-flistmove(1)\n\
+	:<Key>KP_Down:		do-flistmove(1)\n\
 	<Key>Left:		do-flistmove(5)\n\
+	:<Key>KP_Left:		do-flistmove(5)\n\
 	<Key>Next:		do-flistmove(1, 0)\n\
+	:<Key>KP_Next:		do-flistmove(1, 0)\n\
 	<Key>End:		do-flistmove(1, 0, 0)\n\
+	:<Key>KP_End:		do-flistmove(1, 0, 0)\n\
 	<Key>KP_Enter:		do-fselect()\n\
 	<Key>Return:		do-fselect()\n\
 	Ctrl<Key>m:		do-fselect()\n\
@@ -318,7 +334,6 @@ TiMidity*sbox_ratetext.translations: #override\n\
 	<Key>KP_Enter:	do-record()\n\
 	<Key>Return:	do-record()\n\
 	<Key>BackSpace:	delete-previous-character()\n\
-	Shift<Key>:	no-op()\n\
 	~Ctrl<Key>0:	insert-char()\n\
 	~Ctrl<Key>KP_0:	insert-char()\n\
 	~Ctrl<Key>1:	insert-char()\n\
@@ -347,6 +362,8 @@ TiMidity*sbox_ratetext.translations: #override\n\
 	:<Key>KP_Right:	forward-character()\n\
 	<Key>Left:	backward-character()\n\
 	:<Key>KP_Left:	backward-character()\n\
+	Shift<Key>:	no-op()\n\
+	Ctrl<Key>:	no-op()\n\
 	Hyper<Key>:	no-op()\n\
 	Super<Key>:	no-op()\n\
 	None<Key>:	no-op()\n\
@@ -356,6 +373,8 @@ TiMidity*sbox_ratetext.translations: #override\n\
 TiMidity*fbox_toggle0.accelerators: #override\n\
 	<Key>Up:	do-up()\n\
 	<Key>Down:	do-down()\n\
+	<Key>KP_Up:	do-up()\n\
+	<Key>KP_Down:	do-down()\n\
 	<Btn4Down>:	do-up()\n\
 	<Btn5Down>:	do-down()
 TiMidity*confirmexit.label: 終了しますか？
@@ -414,7 +433,7 @@ TiMidity*popup_confirm*background: #666666
 TiMidity*fontSet: -*-fixed-medium-r-normal--14-*-*-*-*-*-iso8859-1,-*-fixed-medium-r-normal--14-*-*-*-*-*-*-*,*
 TiMidity*Dialog*fontSet: -adobe-helvetica-medium-r-normal--12-*-*-*-*-*-iso8859-1,-*-fixed-medium-r-normal--14-*-*-*-*-*-*-*,*
 TiMidity*MenuButton*fontSet: -adobe-helvetica-bold-r-normal--12-*-*-*-*-*-iso8859-1,-*-fixed-medium-r-normal--14-*-*-*-*-*-*-*,*
-TiMidity*textfontset: -*-fixed-medium-r-normal--14-*-*-*-*-*-iso8859-1,-*-fixed-medium-r-normal--14-*-*-*-*-*-*-*
+TiMidity*textfontset: -*-fixed-medium-r-normal--14-*-*-*-*-*-iso8859-1,-*-fixed-medium-r-normal--14-*-*-*-*-*-*-*,*
 TiMidity*SmeBSB.fontSet: -adobe-helvetica-medium-r-normal--12-*-*-*-*-*-iso8859-1,-*-fixed-medium-r-normal--14-*-*-*-*-*-*-*,*
 TiMidity*Command*fontSet: -adobe-helvetica-bold-r-normal--12-*-*-*-*-*-iso8859-1,-*-fixed-medium-r-normal--14-*-*-*-*-*-*-*,*
 TiMidity*List*fontSet: -adobe-helvetica-medium-r-normal--12-*-*-*-*-*-iso8859-1,-*-fixed-medium-r-normal--14-*-*-*-*-*-*-*,*

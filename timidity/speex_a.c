@@ -33,6 +33,16 @@
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#if TIME_WITH_SYS_TIME
+# include <sys/time.h>
+# include <time.h>
+#else
+# if HAVE_SYS_TIME_H
+#  include <sys/time.h>
+# else
+#  include <time.h>
+# endif
+#endif  /* TIME_WITH_SYS_TIME */
 
 #include <speex/speex.h>
 #include <speex/speex_header.h>
@@ -84,7 +94,7 @@ typedef struct {
   /* Speex */
   SpeexHeader      header;
   SpeexBits        bits;
-  SpeexMode*       mode;
+  const SpeexMode* mode;
   void*            state;
   int              frame_size;
   int              nframes;
@@ -465,7 +475,7 @@ static int output_data(char *buf, int32 nbytes)
   Speex_ctx *ctx = speex_ctx;
   int nbBytes;
   int16 *s;
-  int i, j;
+  int i;
   int ret;
   int nbytes_left;
 
@@ -616,8 +626,7 @@ static void close_output(void)
     free(speex_ctx->input);
 
     ctl->cmsg(CMSG_INFO, VERB_NORMAL, "Wrote %lu/%lu bytes(%g%% compressed)",
-	      ctx->out_bytes, ctx->in_bytes, ((double)ctx->out_bytes / (double)ctx->in_bytes)) * 100.;
-
+	      ctx->out_bytes, ctx->in_bytes, ((double)ctx->out_bytes / (double)ctx->in_bytes) * 100.0);
 
     speex_ctx->input = NULL;
     free(speex_ctx);

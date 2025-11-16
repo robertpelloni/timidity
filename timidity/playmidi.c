@@ -302,7 +302,6 @@ static int16 get_midi_controller_amp_depth(midi_controller *);
 /* Rx. ~ (Rcv ~) */
 static void init_rx(int);
 static void set_rx(int, int32, int);
-static int32 get_rx(int, int32);
 static void init_rx_drum(struct DrumParts *);
 static void set_rx_drum(struct DrumParts *, int32, int);
 static int32 get_rx_drum(struct DrumParts *, int32);
@@ -2137,7 +2136,8 @@ static int find_voice(MidiEvent *e)
 	AlternateAssign *altassign;
 	int i, lowest = -1;
 	
-	status_check = (opt_overlap_voice_allow) ? VOICE_SUSTAINED : 0xff;
+	status_check = (opt_overlap_voice_allow)
+			? (VOICE_OFF | VOICE_SUSTAINED) : 0xff;
 	mono_check = channel[ch].mono;
 	altassign = find_altassign(channel[ch].altassign, note);
 	for (i = 0; i < upper_voices; i++)
@@ -2147,18 +2147,15 @@ static int find_voice(MidiEvent *e)
 		}
 	for (i = 0; i < upper_voices; i++)
 		if (voice[i].status != VOICE_FREE && voice[i].channel == ch) {
-			if (voice[i].note == note && (voice[i].status & status_check)) {
-				if (opt_overlap_voice_allow)
-					finish_note(i);	/* drop sustain */
-				else
-					kill_note(i);
-			} else if (mono_check)
+			if (voice[i].note == note && (voice[i].status & status_check))
+				kill_note(i);
+			else if (mono_check)
 				kill_note(i);
 			else if (altassign && find_altassign(altassign, voice[i].note))
 				kill_note(i);
 			else if (voice[i].note == note && (channel[ch].assign_mode == 0
-					|| channel[ch].assign_mode == 1
-					&& voice[i].proximate_flag == 0))
+					|| (channel[ch].assign_mode == 1 &&
+					    voice[i].proximate_flag == 0)))
 				kill_note(i);
 		}
 	for (i = 0; i < upper_voices; i++)
@@ -6727,7 +6724,7 @@ static void do_compute_data_midi(int32 count)
 
 	for (i = 0; i < uv; i++) {
 		if (voice[i].status != VOICE_FREE) {
-			int32 *vpb;
+			int32 *vpb = NULL;
 			int8 flag;
 			
 			if (channel_effect) {
@@ -7304,7 +7301,7 @@ static int compute_data(int32 count)
 	  {
 	      if(filled <= last_filled)
 	      {
-	          int v, kill_nv, temp_nv;
+	          int kill_nv, temp_nv;
 
 		  /* set bounds on "good" and "bad" nv */
 		  if (! opt_realtime_playing && rate > 20 &&
@@ -7355,7 +7352,7 @@ static int compute_data(int32 count)
 		  }
 
 		  for(i = 0; i < kill_nv; i++)
-		      v = reduce_voice();
+		      reduce_voice();
 
 		  /* lower max # of allowed voices to let the buffer recover */
 		  if (auto_reduce_polyphony) {
@@ -8023,8 +8020,8 @@ int play_event(MidiEvent *ev)
 		channel[ch].temper_type = current_event->a;
 		ctl_mode_event(CTLE_TEMPER_TYPE, 1, ch, channel[ch].temper_type);
 		if (temper_type_mute) {
-			if (temper_type_mute & 1 << current_event->a
-					- ((current_event->a >= 0x40) ? 0x3c : 0)) {
+			if (temper_type_mute & (1 << (current_event->a
+					- ((current_event->a >= 0x40) ? 0x3c : 0)))) {
 				SET_CHANNELMASK(channel_mute, ch);
 				ctl_mode_event(CTLE_MUTE, 1, ch, 1);
 			} else {
@@ -8046,8 +8043,8 @@ int play_event(MidiEvent *ev)
 			ctl_mode_event(CTLE_TEMPER_TYPE, 1, i, channel[i].temper_type);
 		}
 		if (temper_type_mute) {
-			if (temper_type_mute & 1 << current_event->a
-					- ((current_event->a >= 0x40) ? 0x3c : 0)) {
+			if (temper_type_mute & (1 << (current_event->a
+					- ((current_event->a >= 0x40) ? 0x3c : 0)))) {
 				FILL_CHANNELMASK(channel_mute);
 				for (i = 0; i < MAX_CHANNELS; i++)
 					ctl_mode_event(CTLE_MUTE, 1, i, 1);

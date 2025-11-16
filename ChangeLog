@@ -1,3 +1,303 @@
+2012-06-28  TAMUKI Shoichi <tamuki@linet.gr.jp>
+
+	* configure.in: Change version to 2.14.0
+
+2012-06-28  Yair K. <cesium2@gmail.com>
+
+	* interface/xaw_i.c: Under some rare circumstances (a file
+	  with a specifically crafted name and timidity executed from
+	  the same directory), a missing NULL check in setDirACT can
+	  lead to a crash. Add the check. While at it, add another
+	  NULL check just in case.
+
+2012-06-26  TAMUKI Shoichi <tamuki@linet.gr.jp>
+
+	* NEWS: Add new entry for 2.14.0
+
+2012-06-25  Yair K. <cesium2@gmail.com>
+
+	* timidity/timidity.c: Make timidity continue the dynamic
+	  interface loading loop if dl_load_file fails. Earlier, it
+	  simply returned NULL in that case, which meant that if an
+	  dlopen failed at an dynamic interface loaded before arriving
+	  at the desired interface (say, because of missing
+	  dependencies or bad symlink) one couldn't load said desired
+	  (dynamically-linked) interface at all.
+	* interface/TiMidity-uj.ad, interface/TiMidity.ad,
+	  interface/x_trace.c, interface/xaw_i.c: Make a double-click
+	  open/save a file in the dialogs. It also removes some
+	  useless casts, and a no longer necessary action
+	  (do-popdown()).
+	* interface/x_trace.c: Make the trace cut off text in the
+	  instrument name column correctly in the Xft case.
+
+2012-06-12  Yair K. <cesium2@gmail.com>
+
+	* interface/xaw_i.c: xaw interface: various fixes
+	  - There was an off-by-one in the ARGB converter.
+	  - Make sure the pause button can't be set when not playing
+	  - and visa versa for the play button
+	  - leak less memory
+	* interface/TiMidity-uj.ad, interface/TiMidity.ad,
+	  interface/x_trace.c, interface/xaw_i.c, interface/xdnd.c:
+	  Various fixes
+	  - make the play button activate when autostarting a saved
+	    list and when saving a file (two chunks).
+	  - add a few consts (not needed by most compilers)
+	  - add some keysyms of the numeric keyboard to the resource
+	    files
+
+2012-06-05  Yair K. <cesium2@gmail.com>
+
+	* doc/C/README.xaw, interface/TiMidity-uj.ad,
+	  interface/TiMidity.ad, interface/xaw_i.c, interface/xdnd.c,
+	  interface/xdnd.h: xaw: Setup _NET_WM_ICON correctly
+	  Having upgraded to a new KDE version, I noticed the task
+	  switcher didn't display timidity's thumbnail. Apparently it
+	  doesn't acknowledge the WM_HINTS bitmap.
+	  So the attached diff includes a trivial converter (1bit
+	  bitmap->ARGB) to set up _NET_WM_ICON correctly. It uses the
+	  simple timidity.xbm icon (I also had a version using the
+	  color icon from pixmap/timidity.xpm but I prefer this icon -
+	  I could add that as an option).
+	  The diff also includes some #include rationalization and
+	  resource renaming ("noPlaying" had a different spelling in
+	  .ad files vs the code).
+
+2012-06-01  Takashi Iwai <tiwai@suse.de>
+
+	* interface/xskin_spectrum.c: [PATCH 1/9] Fix possible invalid
+	  access below the array range
+	* interface/server_c.c: [PATCH 3/9] Fix the faulty check of
+	  parameters in server_c.c:control_getcmd()
+	  The check of the array size in server_c.c:control_getcmd()
+	  is wrong as the nparmas is incremeted after the check with
+	  MAX_GETCMD_PARAMS.  Also, there are other bugs that *nparams
+	  isn't initialized when the first token is NULL, etc.
+	  Overall, the code is unnecessarily tricky.
+	  This patch simplifies the code and fixes the array size
+	  check.
+	  Bugzila: https://bugzilla.novell.com/show_bug.cgi?id=517719
+	* libunimod/mloader.c: [PATCH 4/9] Add missing void argument
+	  for function declarations
+	* autoconf/utils.m4: [PATCH 5/9] Add missing quotes in
+	  autoconf/utils.m4
+	* timidity/timidity.h: [PATCH 6/9] Add the lzma decompression
+	  support
+	* interface/emacs_c.c: [PATCH 7/9] Fix the missing return
+	  value in emacs_c.c
+	* timidity/smplfile.c: [PATCH 8/9] Fix type-punning in
+	  smplfile.c
+	* autoconf/alsa.m4, autoconf/ao.m4, autoconf/arts.m4,
+	  autoconf/esd.m4, autoconf/gtk-2.0.m4, autoconf/gtk.m4,
+	  autoconf/libFLAC.m4, autoconf/libOggFLAC.m4,
+	  autoconf/ogg.m4, autoconf/vorbis.m4, configure.in:
+	  [PATCH 9/9] Use AS_HELP_STRING to make the --help output
+	  more readable
+
+2012-05-29  Yair K. <cesium2@gmail.com>
+
+	* doc/C/README.xaw, interface/TiMidity-uj.ad,
+	  interface/TiMidity.ad, interface/xaw_c.c, interface/xaw_i.c,
+	  interface/xaw_p.h: Make the interface apply the previous
+	  volume.  It also fixes some minor display issues (remove the
+	  checkmark next to hidetrace menu item when initing the trace
+	  the first time after starting with '-ia' and 'Disp:Trace'
+	  set to 0, don't allow activing the play button when no files
+	  are loaded).
+	* interface/x_trace.c, interface/x_trace.h, interface/xaw_i.c,
+	  interface/xdnd.c: Fix some off by ones (one prevented the
+	  channel number being displayed when muting it [right-click
+	  in trace mode], another in xdnd.c led to a gcc warning with
+	  -Wall), and free a bit more memory (less valgrind warnings).
+	* timidity/miditrace.c: Revert fix soundspec in trace mode
+
+2012-05-26  Hans de Goede <hdegoede@redhat.com>
+
+	* configure.in: configure: Fix building of dynamic user
+	  interfaces
+	* timidity/mac_main.c, timidity/timidity.c: Add a trysource
+	  config file directive
+	  Add a "trysource" config file directive, which allows to try
+	  and source other config files, while continuing without
+	  error if the specified file is missing.
+	  Also cleanup the user config loading code using this new
+	  functionality.
+	* interface/x_trace.c, interface/xaw_c.c: xaw-interface: Fix
+	  crash when MAX_CHANNELS > 32 (by Yair K.)
+	* configure.in, doc/C/README.xaw, interface/Makefile.am,
+	  interface/TiMidity-uj.ad, interface/TiMidity.ad,
+	  interface/x_trace.c, interface/x_trace.h, interface/xaw.h,
+	  interface/xaw_c.c, interface/xaw_i.c, interface/xaw_p.h,
+	  interface/xdnd.h: xaw interface update (by Yair K.)
+	* timidity/timidity.h: Improve timidity default settings
+	  (by Yair K.)
+	* configure.in: configure: Fix building with X11 based
+	  userinterfaces builtin (Reported by Yair K.)
+	* interface/xaw_i.c, interface/xdnd.c: Fix compiler warnings
+	  from clang (by Yair K.)
+	* interface/xaw_i.c: Xaw: unbreak xdnd (by Yair K.)
+
+2011-12-30  TAMUKI Shoichi <tamuki@linet.gr.jp>
+
+	* COPYING: Remove due to autogenerated file
+	* Makefile.am, autogen.sh: Add autogen.sh
+
+2011-12-22  Hans de Goede <hdegoede@redhat.com>
+
+	* configure.in: [PATCH 18/18] configure: Don't add -lX11 to
+	  the generic LIBS
+	  This stops timidity itself from depending on libX11 even
+	  when build without any interfaces builtin which need libX11.
+	  (revised by TAMUKI Shoichi)
+	* interface/x_sherry.c: Fix to fit with libpng 1.5 and newer
+
+2011-12-18  TAMUKI Shoichi <tamuki@linet.gr.jp>
+
+	* Makefile.in, aclocal.m4, autoconf/Makefile.in,
+	  autoconf/config.guess, autoconf/config.sub,
+	  autoconf/depcomp, autoconf/install-sh, autoconf/missing,
+	  autoconf/mkinstalldirs, config.h.in, configs/Makefile.in,
+	  configure, doc/C/Makefile.in, doc/Makefile.in,
+	  doc/ja_JP.eucJP/Makefile.in, interface/Makefile.in,
+	  interface/bitmaps/Makefile.in,
+	  interface/motif_bitmaps/Makefile.in,
+	  interface/pixmaps/Makefile.in, libarc/Makefile.in,
+	  libunimod/Makefile.in, script/Makefile.in,
+	  timidity/Makefile.in, utils/Makefile.in, windrv/Makefile.in:
+	  Remove all the autogenerated files
+
+2011-12-08  TAMUKI Shoichi <tamuki@linet.gr.jp>
+
+	* interface/alsaseq_c.c: About 4 years ago, a simple patch was
+	  merged, which disabled ALSA sequencer interface polling,
+	  when it's not needed.  As a result, when using ALSA
+	  sequencer interface (timidity -iA -B2,8 -q0/0), it comes to
+	  cause a terrible sound.  That improves with "timidity -iA",
+	  however the real-time response is too bad for practical use.
+	  So, I reverted the patch as a workaround.  And then, I
+	  applied yet another patch instead, which works fine.  See
+	  http://fedev.blogspot.com/2007/07/timidity-power-usage.html
+
+2011-12-07  TAMUKI Shoichi <tamuki@linet.gr.jp>
+
+	* timidity/playmidi.c: About 6 years ago, a simple patch was
+	  merged, which changed sustained notes not to drop when
+	  opt_overlap_voice_allow is enabled.  Perhaps, that might
+	  have a good effect in a certain case, however it often
+	  misses the tracer display.  So, I reverted the patch as a
+	  workaround.
+
+2011-12-06  TAMUKI Shoichi <tamuki@linet.gr.jp>
+
+	* interface/Makefile.am, interface/timidity.el,
+	  interface/timidity.pel: Set the absolute path of timidity
+	  in timidity.el automatically; add timidity.pel file to be
+	  preprocessed, and remove timidity.el
+	* configure.in: In the case of --enable-dynamic=emacs and
+	  --enable-dynamic=alsaseq, make install timidity.el and
+	  enable the long option of ALSA sequencer interface,
+	  respectively (in addition, autoreconf)
+
+2011-12-05  Hans de Goede <hdegoede@redhat.com>
+
+	* interface/tkmidity.ptcl, interface/tkpanel.tcl,
+	  script/dllutl.rb: [PATCH 11/17] Make shebang paths
+	  /usr/bin/foo rather then /usr/local/bin/foo
+	  This makes life easier for packagers, people who want to use
+	  non standard paths will need to fix this up themselves...
+	  (revised by TAMUKI Shoichi)
+
+2011-12-04  TAMUKI Shoichi <tamuki@linet.gr.jp>
+
+	* configure.in: Support for Tcl/Tk 8.5 and autoreconf
+
+2011-12-04  Hans de Goede <hdegoede@redhat.com>
+
+	* timidity/esd_a.c: [PATCH 1/9] esd_a: Don't start ESD
+	  Don't start ESD if it is not running yet, esp. not from
+	  detect() !
+	* timidity/ao_a.c: [PATCH 2/9] libao: Add a detect() function
+	  Most Linux distros use pulseaudio by now, and libao is the
+	  best way to use pulseaudio from timidity. This patch adds a
+	  detect function to libao, which will make libao autodetect
+	  succeed only when pulse is available, so that we can prefer
+	  libao in the probe order to get pulse, without also getting
+	  libao on systems where we should be using alsa directly.
+	* timidity/output.c: [PATCH 3/9] Change audio output detection
+	  order
+	  First try the various desktop daemons we support, and only
+	  when those are not available use the systems native sound
+	  system. Also try ALSA before the native sound system, since
+	  the native sound system on Linux is set to OSS, and ALSA
+	  definitely is preferable over OSS.
+	* doc/C/timidity.1, doc/C/timidity.cfg.5: [PATCH 4/9] Various
+	  man page fixes
+	  courtesy of Debian (revised by TAMUKI Shoichi)
+	* interface/alsaseq_c.c, timidity/timidity.c: [PATCH 6/9] Fork
+	  earlier when we're going to run deamonized in ALSA sequencer
+	  mode
+	  If we're going to fork for daemon mode, we need to fork
+	  earlier, as certain output libraries (pulseaudio) become
+	  unhappy if initialized before forking and then being used
+	  from the child.
+	* timidity/flac_a.c: [PATCH 7/9] flac_a: Fix compiling with
+	  recent flac versions
+	  The LEGACY_FLAC test was only succeeding on windows since
+	  the FLAC/export.h was inside a windows #ifdef block.
+	  While at it also fix various compiler warnings, including
+	  atleast 2 real bugs:
+	  1) The missing include for common.h meant the safe_malloc
+	     prototype was missing, making the compiler assume it
+	     returns an int -> fail on 64 bits
+	  2) The | with FLAC__STREAM_ENCODER_VERIFY_MISMATCH_IN_AUDIO_DATA
+	     in the error handling test was missing () and it is the
+	     wrong thing to do in general since this is an enum not a
+	     flags field.
+	* timidity/controls.c, timidity/effect.c, timidity/oss_a.c,
+	  timidity/playmidi.h, timidity/speex_a.c, timidity/wrd.h:
+	  [PATCH 8/9] Fix a bunch of: warning: implicit declaration of
+	  function ... warnings
+	* timidity/sndfont.c: [PATCH 9/9] sndfont: Work around
+	  soundfonts with missing links between stereo samples
+	  Some sf2 files have all their link ids between stereo
+	  samples set to 0, this patch works around that, atleast for
+	  files which have 2 matching the matched left + right samples
+	  directly after each other in the instruments layers list.
+	* interface/gtk_i.c, interface/server_c.c, interface/tk_c.c,
+	  interface/wrdt_tty.c, interface/x_sherry.c, interface/xaw_c.c,
+	  interface/xaw_i.c, interface/xskin_c.c, libarc/unlzh.c,
+	  libunimod/load_far.c, libunimod/load_it.c, libunimod/mloader.c,
+	  libunimod/mlutil.c, timidity/ao_a.c, timidity/calcnewt.c,
+	  timidity/common.c, timidity/effect.c, timidity/esd_a.c,
+	  timidity/freq.c, timidity/instrum.c, timidity/loadtab.c,
+	  timidity/m2m.c, timidity/miditrace.c, timidity/output.c,
+	  timidity/playmidi.c, timidity/readmidi.c, timidity/recache.c,
+	  timidity/resample.c, timidity/reverb.c, timidity/smplfile.c,
+	  timidity/speex_a.c, timidity/timidity.c, utils/net.c,
+	  utils/nkflib.c: [PATCH 10/17] Fix / silence various compiler
+	  warnings
+	* configure.in: [PATCH 14/17] Silence autofoo warnings about
+	  have_speex ac cache identifier (autoreconf by TAMUKI Shochi)
+	* interface/Makefile.am, interface/dynamic_c.c,
+	  timidity/controls.c, timidity/timidity.c,
+	  (remove) interface/dynamic_c.c: [PATCH 15/17] Get rid of the
+	  dynamic_control_mode ControlMode
+	  This is a left over from before the dynamic_interface_module()
+	  rewrite, not only is it no longer needed its code is plain
+	  wrong, as it still contains a prototype for the old way
+	  different dynamic_interface_module() and tries to call it as
+	  if it were the old version, if that code path where to ever
+	  be invoked bad things (tm) would happen. Luckily it is never
+	  used, so simply nuke it. (autoreconf by TAMUKI Shoichi)
+	* timidity/dl_dlopen.c: [PATCH 16/17] Silence dlsym errors
+	  The way the new dynamic_interface_module() function probes
+	  for dynamic interfaces cause it to always hit a few dlsym
+	  errors as soon as you have more then one dynamic interface,
+	  so silence these errors.
+	* timidity/timidity.c: [PATCH 17/17] Fix listing of dynamic
+	  interfaces in --help output
+
 2010-09-19  Kentaro Sato <kentaro@ranvis.com>
 
 	* timidity/instrum.[ch]: Fix a bug created at the previous commit

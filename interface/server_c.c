@@ -416,7 +416,7 @@ static void server_reset(void);
 
 static int ctl_pass_playing_list(int n, char *args[])
 {
-    int sock;
+    int sock = 0;
 
     if(n != 2 && n != 1)
     {
@@ -525,11 +525,13 @@ static int control_getcmd(char **params, int *nparams)
     }
     if(n == 0)
 	return 1;
-    if((params[0] = strtok(buff, " \t\r\n\240")) == NULL)
-	return 0;
     *nparams = 0;
-    while(params[*nparams] && *nparams < MAX_GETCMD_PARAMS)
-	params[++(*nparams)] = strtok(NULL," \t\r\n\240");
+    do {
+	params[*nparams] = strtok(*nparams ? NULL : buff, " \t\r\n\240");
+	if (!params[*nparams])
+	    break;
+	(*nparams)++;
+    } while (*nparams < MAX_GETCMD_PARAMS);
     return 0;
 }
 
@@ -609,6 +611,7 @@ static void add_tick(int tick)
     seq_play_event(&ev);
 }
 
+#if 0
 static int tick2sample(int tick)
 {
     int32 samples, cum;
@@ -619,6 +622,7 @@ static int tick2sample(int tick)
 	samples += ((sample_cum >> 16) & 0xFFFF);
     return samples;
 }
+#endif
 
 int time2tick(double sec)
 {
@@ -650,7 +654,6 @@ static void do_timing(uint8 *);
 static void do_sysex(uint8 *, int len);
 static void do_extended(uint8 *);
 static void do_timeout(void);
-static void server_seq_sync(double tm);
 
 static uint8 data_buffer[BUFSIZ];
 static int data_buffer_len;
@@ -824,6 +827,7 @@ static int data_flush(int discard)
     return 0;
 }
 
+#if 0
 static void server_seq_sync(double tm)
 {
     double t;
@@ -832,6 +836,7 @@ static void server_seq_sync(double tm)
     if(t > tm)
 	usleep((unsigned long)((t - tm) * 1000000));
 }
+#endif
 
 static void server_reset(void)
 {
@@ -856,7 +861,7 @@ static int do_control_command(void)
 {
     int status;
     char *params[MAX_GETCMD_PARAMS];
-    int nparams;
+    int nparams = 0;
     int i;
 
     if((status = control_getcmd(params, &nparams)) == -1)
@@ -1130,7 +1135,7 @@ static int do_control_command_nonblock(void)
 
 static int fdgets(char *buff, size_t buff_size, struct fd_read_buffer *p)
 {
-    int n, len, count, size, fd;
+    int n, count, size, fd;
     char *buff_endp = buff + buff_size - 1, *pbuff, *beg;
 
     fd = p->fd;
@@ -1142,7 +1147,6 @@ static int fdgets(char *buff, size_t buff_size, struct fd_read_buffer *p)
 	return 0;
     }
 
-    len = 0;
     count = p->count;
     size = p->size;
     pbuff = p->buff;

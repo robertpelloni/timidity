@@ -138,17 +138,9 @@ extern PlayMode midi_play_mode;
 extern PlayMode modmidi_play_mode;
 
 PlayMode *play_mode_list[] = {
-#ifdef DEV_PLAY_MODE
-  DEV_PLAY_MODE,
-#endif
-
-#ifdef AU_ALSA
-  &alsa_play_mode,
-#endif /* AU_ALSA */
-
-#ifdef AU_HPUX_ALIB
-  &hpux_nplay_mode,
-#endif /* AU_HPUX_ALIB */
+#if defined(AU_AO) /* Try libao first as that will give us pulseaudio */
+  &ao_play_mode,
+#endif /* AU_AO */
 
 #if defined(AU_ARTS)
   &arts_play_mode,
@@ -157,6 +149,18 @@ PlayMode *play_mode_list[] = {
 #if defined(AU_ESD)
   &esd_play_mode,
 #endif /* AU_ESD */
+
+#ifdef AU_ALSA /* Try alsa (aka DEV_PLAY_MODE 2 on Linux) first */
+  &alsa_play_mode,
+#endif /* AU_ALSA */
+
+#ifdef DEV_PLAY_MODE /* OS dependent direct hardware access, OSS on Linux */
+  DEV_PLAY_MODE,
+#endif
+
+#ifdef AU_HPUX_ALIB
+  &hpux_nplay_mode,
+#endif /* AU_HPUX_ALIB */
 
 #if defined(AU_PORTAUDIO)
 #ifndef AU_PORTAUDIO_DLL
@@ -179,10 +183,6 @@ PlayMode *play_mode_list[] = {
 #if defined(AU_NAS)
   &nas_play_mode,
 #endif /* AU_NAS */
-
-#if defined(AU_AO)
-  &ao_play_mode,
-#endif /* AU_PORTAUDIO */
 
 #ifndef __MACOS__
   &wave_play_mode,
@@ -452,9 +452,7 @@ int32 general_output_convert(int32 *buf, int32 count)
 int validate_encoding(int enc, int include_enc, int exclude_enc)
 {
     const char *orig_enc_name, *enc_name;
-    int orig_enc;
 
-    orig_enc = enc;
     orig_enc_name = output_encoding_string(enc);
     enc |= include_enc;
     enc &= ~exclude_enc;
@@ -643,7 +641,7 @@ char *create_auto_output_name(const char *input_filename, char *ext_str, char *o
 	  *p = '_';
 
     if(mode==2){
-      char *p1,*p2,*p3;
+      char *p1,*p2;
 #ifndef __W32__
       p = strrchr(output_filename+dir_len,PATH_SEP);
 #else
@@ -654,6 +652,7 @@ char *create_auto_output_name(const char *input_filename, char *ext_str, char *o
 #endif
       p1 = STRRCHR(output_filename+dir_len,'/');
       p2 = STRRCHR(output_filename+dir_len,'\\');
+      char *p3;
       p3 = STRRCHR(output_filename+dir_len,':');
 #undef STRRCHR
       p1>p2 ? (p1>p3 ? (p = p1) : (p = p3)) : (p2>p3 ? (p = p2) : (p = p3));

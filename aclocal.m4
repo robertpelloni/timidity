@@ -929,7 +929,7 @@ dnl   CC CFLAGS CPPFLAGS LDFLAGS LIBS SHCFLAGS SHLD SHLDFLAGS
 dnl   ac_cv_header_dlfcn_h lib_dl_opt so
 AC_DEFUN([CHECK_DLSYM_UNDERSCORE],
 [dnl Check if dlsym need a leading underscore
-AC_MSG_CHECKING(whether your dlsym() needs a leading underscore)
+AC_MSG_CHECKING([whether your dlsym() needs a leading underscore])
 AC_CACHE_VAL(timidity_cv_func_dlsym_underscore,
 [case "$ac_cv_header_dlfcn_h" in
 yes) i_dlfcn=define;;
@@ -1020,7 +1020,7 @@ dnl contains program from perl5
 dnl CONTAINS_INIT()
 AC_DEFUN([CONTAINS_INIT],
 [dnl Some greps do not return status, grrr.
-AC_MSG_CHECKING(whether grep returns status)
+AC_MSG_CHECKING([whether grep returns status])
 echo "grimblepritz" >grimble
 if grep blurfldyick grimble >/dev/null 2>&1 ; then
 	contains="./contains"
@@ -1260,18 +1260,20 @@ dnl
 dnl Get the cflags and libraries for alsa
 dnl
 AC_ARG_WITH(alsa-prefix,
-[  --with-alsa-prefix=PFX  Prefix where Alsa library is installed(optional)],
-[alsa_prefix="$withval"], [alsa_prefix=""])
+	    AS_HELP_STRING([--with-alsa-prefix=PFX],
+	    		   [Prefix where Alsa library is installed(optional)]),
+	    [alsa_prefix="$withval"], [alsa_prefix=""])
 
 AC_ARG_WITH(alsa-inc-prefix,
-[  --with-alsa-inc-prefix=PFX  Prefix where include libraries are (optional)],
-[alsa_inc_prefix="$withval"], [alsa_inc_prefix=""])
+	    AS_HELP_STRING([--with-alsa-inc-prefix=PFX],
+	    		   [Prefix where include libraries are (optional)]),
+	    [alsa_inc_prefix="$withval"], [alsa_inc_prefix=""])
 
 dnl FIXME: this is not yet implemented
 AC_ARG_ENABLE(alsatest,
-[  --disable-alsatest      Do not try to compile and run a test Alsa program],
-[enable_alsatest=no],
-[enable_alsatest=yes])
+	      AS_HELP_STRING([--disable-alsatest],
+	      		     [Do not try to compile and run a test Alsa program]),
+	      [enable_alsatest=no], [enable_alsatest=yes])
 
 dnl Add any special include directories
 AC_MSG_CHECKING(for ALSA CFLAGS)
@@ -1401,12 +1403,18 @@ AC_DEFUN([AM_PATH_ESD],
 [dnl 
 dnl Get the cflags and libraries from the esd-config script
 dnl
-AC_ARG_WITH(esd-prefix,[  --with-esd-prefix=PFX   Prefix where ESD is installed (optional)],
-            esd_prefix="$withval", esd_prefix="")
-AC_ARG_WITH(esd-exec-prefix,[  --with-esd-exec-prefix=PFX Exec prefix where ESD is installed (optional)],
-            esd_exec_prefix="$withval", esd_exec_prefix="")
-AC_ARG_ENABLE(esdtest, [  --disable-esdtest       Do not try to compile and run a test ESD program],
-		    , enable_esdtest=yes)
+AC_ARG_WITH(esd-prefix,
+	    AS_HELP_STRING([--with-esd-prefix=PFX],
+	    		   [Prefix where ESD is installed (optional)]),
+            [esd_prefix="$withval"], [esd_prefix=""])
+AC_ARG_WITH(esd-exec-prefix,
+	    AS_HELP_STRING([--with-esd-exec-prefix=PFX],
+	    		   [Exec prefix where ESD is installed (optional)]),
+            [esd_exec_prefix="$withval"], [esd_exec_prefix=""])
+AC_ARG_ENABLE(esdtest,
+	      AS_HELP_STRING([--disable-esdtest],
+	      		     [Do not try to compile and run a test ESD program]),
+		    , [enable_esdtest=yes])
 
   if test x$esd_exec_prefix != x ; then
      esd_args="$esd_args --exec-prefix=$esd_exec_prefix"
@@ -1595,10 +1603,21 @@ AC_DEFUN([XIPH_PATH_AO],
 [dnl 
 dnl Get the cflags and libraries
 dnl
-AC_ARG_WITH(ao,[  --with-ao=PFX   Prefix where libao is installed (optional)], ao_prefix="$withval", ao_prefix="")
-AC_ARG_WITH(ao-libraries,[  --with-ao-libraries=DIR   Directory where libao library is installed (optional)], ao_libraries="$withval", ao_libraries="")
-AC_ARG_WITH(ao-includes,[  --with-ao-includes=DIR   Directory where libao header files are installed (optional)], ao_includes="$withval", ao_includes="")
-AC_ARG_ENABLE(aotest, [  --disable-aotest       Do not try to compile and run a test ao program],, enable_aotest=yes)
+AC_ARG_WITH(ao,
+	    AS_HELP_STRING([--with-ao=PFX], [Prefix where libao is installed (optional)]),
+	    		   [ao_prefix="$withval"], [ao_prefix=""])
+AC_ARG_WITH(ao-libraries,
+	    AS_HELP_STRING([--with-ao-libraries=DIR],
+	    		   [Directory where libao library is installed (optional)]),
+	    [ao_libraries="$withval"], [ao_libraries=""])
+AC_ARG_WITH(ao-includes,
+	    AS_HELP_STRING([--with-ao-includes=DIR],
+	    		   [Directory where libao header files are installed (optional)]),
+	    [ao_includes="$withval"], [ao_includes=""])
+AC_ARG_ENABLE(aotest,
+	      AS_HELP_STRING([--disable-aotest],
+	      		     [Do not try to compile and run a test ao program]),,
+	      [enable_aotest=yes])
 
 
   if test "x$ao_libraries" != "x" ; then
@@ -1707,10 +1726,22 @@ AC_DEFUN([XIPH_PATH_OGG],
 [dnl 
 dnl Get the cflags and libraries
 dnl
-AC_ARG_WITH(ogg,[  --with-ogg=PFX   Prefix where libogg is installed (optional)], ogg_prefix="$withval", ogg_prefix="")
-AC_ARG_WITH(ogg-libraries,[  --with-ogg-libraries=DIR   Directory where libogg library is installed (optional)], ogg_libraries="$withval", ogg_libraries="")
-AC_ARG_WITH(ogg-includes,[  --with-ogg-includes=DIR   Directory where libogg header files are installed (optional)], ogg_includes="$withval", ogg_includes="")
-AC_ARG_ENABLE(oggtest, [  --disable-oggtest       Do not try to compile and run a test Ogg program],, enable_oggtest=yes)
+AC_ARG_WITH(ogg,
+	    AS_HELP_STRING([--with-ogg=PFX],
+	    		   [Prefix where libogg is installed (optional)]),
+	    [ogg_prefix="$withval"], [ogg_prefix=""])
+AC_ARG_WITH(ogg-libraries,
+	    AS_HELP_STRING([--with-ogg-libraries=DIR],
+	    		   [Directory where libogg library is installed (optional)]),
+	    [ogg_libraries="$withval"], [ogg_libraries=""])
+AC_ARG_WITH(ogg-includes,
+	    AS_HELP_STRING([--with-ogg-includes=DIR],
+	    		   [Directory where libogg header files are installed (optional)]),
+	    [ogg_includes="$withval"], [ogg_includes=""])
+AC_ARG_ENABLE(oggtest,
+	      AS_HELP_STRING([--disable-oggtest],
+	      		     [Do not try to compile and run a test Ogg program]),,
+	      [enable_oggtest=yes])
 
   if test "x$ogg_libraries" != "x" ; then
     OGG_LIBS="-L$ogg_libraries"
@@ -1811,10 +1842,22 @@ AC_DEFUN([XIPH_PATH_VORBIS],
 [dnl 
 dnl Get the cflags and libraries
 dnl
-AC_ARG_WITH(vorbis,[  --with-vorbis=PFX   Prefix where libvorbis is installed (optional)], vorbis_prefix="$withval", vorbis_prefix="")
-AC_ARG_WITH(vorbis-libraries,[  --with-vorbis-libraries=DIR   Directory where libvorbis library is installed (optional)], vorbis_libraries="$withval", vorbis_libraries="")
-AC_ARG_WITH(vorbis-includes,[  --with-vorbis-includes=DIR   Directory where libvorbis header files are installed (optional)], vorbis_includes="$withval", vorbis_includes="")
-AC_ARG_ENABLE(vorbistest, [  --disable-vorbistest       Do not try to compile and run a test Vorbis program],, enable_vorbistest=yes)
+AC_ARG_WITH(vorbis,
+	    AS_HELP_STRING([--with-vorbis=PFX],
+	    		   [Prefix where libvorbis is installed (optional)]),
+	    [vorbis_prefix="$withval"], [vorbis_prefix=""])
+AC_ARG_WITH(vorbis-libraries,
+	    AS_HELP_STRING([--with-vorbis-libraries=DIR],
+			   [Directory where libvorbis library is installed (optional)]),
+	    [vorbis_libraries="$withval"], [vorbis_libraries=""])
+AC_ARG_WITH(vorbis-includes,
+	    AS_HELP_STRING([--with-vorbis-includes=DIR],
+	    		   [Directory where libvorbis header files are installed (optional)]),
+	    [vorbis_includes="$withval"], [vorbis_includes=""])
+AC_ARG_ENABLE(vorbistest,
+	      AS_HELP_STRING([--disable-vorbistest],
+			     [Do not try to compile and run a test Vorbis program]),
+	      , [enable_vorbistest=yes])
 
   if test "x$vorbis_libraries" != "x" ; then
     VORBIS_LIBS="-L$vorbis_libraries"
@@ -1932,10 +1975,22 @@ AC_DEFUN([AM_PATH_LIBFLAC],
 [dnl 
 dnl Get the cflags and libraries
 dnl
-AC_ARG_WITH(libFLAC,[  --with-libFLAC=PFX   Prefix where libFLAC is installed (optional)], libFLAC_prefix="$withval", libFLAC_prefix="")
-AC_ARG_WITH(libFLAC-libraries,[  --with-libFLAC-libraries=DIR   Directory where libFLAC library is installed (optional)], libFLAC_libraries="$withval", libFLAC_libraries="")
-AC_ARG_WITH(libFLAC-includes,[  --with-libFLAC-includes=DIR   Directory where libFLAC header files are installed (optional)], libFLAC_includes="$withval", libFLAC_includes="")
-AC_ARG_ENABLE(libFLACtest, [  --disable-libFLACtest       Do not try to compile and run a test libFLAC program],, enable_libFLACtest=yes)
+AC_ARG_WITH(libFLAC,
+	    AS_HELP_STRING([--with-libFLAC=PFX],
+	    		   [Prefix where libFLAC is installed (optional)]),
+	    [libFLAC_prefix="$withval"], [libFLAC_prefix=""])
+AC_ARG_WITH(libFLAC-libraries,
+	    AS_HELP_STRING([--with-libFLAC-libraries=DIR],
+	    		   [Directory where libFLAC library is installed (optional)]),
+	    		   [libFLAC_libraries="$withval"], [libFLAC_libraries=""])
+AC_ARG_WITH(libFLAC-includes,
+	    AS_HELP_STRING([--with-libFLAC-includes=DIR],
+	    		   [Directory where libFLAC header files are installed (optional)]),
+	    		   [libFLAC_includes="$withval"], [libFLAC_includes=""])
+AC_ARG_ENABLE(libFLACtest,
+	      AS_HELP_STRING([--disable-libFLACtest],
+	      		     [Do not try to compile and run a test libFLAC program]),,
+	      		     [enable_libFLACtest=yes])
 
   if test "x$libFLAC_libraries" != "x" ; then
     LIBFLAC_LIBS="-L$libFLAC_libraries"
@@ -2037,10 +2092,22 @@ AC_DEFUN([AM_PATH_LIBOGGFLAC],
 [dnl 
 dnl Get the cflags and libraries
 dnl
-AC_ARG_WITH(libOggFLAC,[  --with-libOggFLAC=PFX   Prefix where libOggFLAC is installed (optional)], libOggFLAC_prefix="$withval", libOggFLAC_prefix="")
-AC_ARG_WITH(libOggFLAC-libraries,[  --with-libOggFLAC-libraries=DIR   Directory where libOggFLAC library is installed (optional)], libOggFLAC_libraries="$withval", libOggFLAC_libraries="")
-AC_ARG_WITH(libOggFLAC-includes,[  --with-libOggFLAC-includes=DIR   Directory where libOggFLAC header files are installed (optional)], libOggFLAC_includes="$withval", libOggFLAC_includes="")
-AC_ARG_ENABLE(libOggFLACtest, [  --disable-libOggFLACtest       Do not try to compile and run a test libOggFLAC program],, enable_libOggFLACtest=yes)
+AC_ARG_WITH(libOggFLAC,
+	    AS_HELP_STRING([--with-libOggFLAC=PFX],
+	    		   [Prefix where libOggFLAC is installed (optional)]),
+	    [libOggFLAC_prefix="$withval"], [libOggFLAC_prefix=""])
+AC_ARG_WITH(libOggFLAC-libraries,
+	    AS_HELP_STRING([--with-libOggFLAC-libraries=DIR],
+	    		   [Directory where libOggFLAC library is installed (optional)]),
+	    [libOggFLAC_libraries="$withval"], [libOggFLAC_libraries=""])
+AC_ARG_WITH(libOggFLAC-includes,
+	    AS_HELP_STRING([--with-libOggFLAC-includes=DIR],
+	    		   [Directory where libOggFLAC header files are installed (optional)]),
+	    [libOggFLAC_includes="$withval"], [libOggFLAC_includes=""])
+AC_ARG_ENABLE(libOggFLACtest,
+	      AS_HELP_STRING([--disable-libOggFLACtest],
+	      		     [Do not try to compile and run a test libOggFLAC program]),,
+	      [enable_libOggFLACtest=yes])
 
   if test "x$libOggFLAC_libraries" != "x" ; then
     LIBOGGFLAC_LIBS="-L$libOggFLAC_libraries"
@@ -2143,8 +2210,10 @@ AC_DEFUN([AM_PATH_GTK_2_0],
 [dnl 
 dnl Get the cflags and libraries from pkg-config
 dnl
-AC_ARG_ENABLE(gtktest, [  --disable-gtktest       do not try to compile and run a test GTK+ program],
-		    , enable_gtktest=yes)
+AC_ARG_ENABLE(gtktest,
+	      AS_HELP_STRING([--disable-gtktest],
+	      		     [do not try to compile and run a test GTK+ program]),
+	      , [enable_gtktest=yes])
 
   pkg_config_args=gtk+-2.0
   for module in . $4
@@ -2339,12 +2408,18 @@ AC_DEFUN([AM_PATH_GTK],
 [dnl 
 dnl Get the cflags and libraries from the gtk-config script
 dnl
-AC_ARG_WITH(gtk-prefix,[  --with-gtk-prefix=PFX   Prefix where GTK is installed (optional)],
-            gtk_config_prefix="$withval", gtk_config_prefix="")
-AC_ARG_WITH(gtk-exec-prefix,[  --with-gtk-exec-prefix=PFX Exec prefix where GTK is installed (optional)],
-            gtk_config_exec_prefix="$withval", gtk_config_exec_prefix="")
-AC_ARG_ENABLE(gtktest, [  --disable-gtktest       Do not try to compile and run a test GTK program],
-		    , enable_gtktest=yes)
+AC_ARG_WITH(gtk-prefix,
+	    AS_HELP_STRING([--with-gtk-prefix=PFX],
+	    		   [Prefix where GTK is installed (optional)]),
+            [gtk_config_prefix="$withval"], [gtk_config_prefix=""])
+AC_ARG_WITH(gtk-exec-prefix,
+	    AS_HELP_STRING([--with-gtk-exec-prefix=PFX],
+	    		   [Exec prefix where GTK is installed (optional)]),
+	    [gtk_config_exec_prefix="$withval"], [gtk_config_exec_prefix=""])
+AC_ARG_ENABLE(gtktest,
+	      AS_HELP_STRING([--disable-gtktest],
+	      		     [Do not try to compile and run a test GTK program]),
+	      , [enable_gtktest=yes])
 
   for module in . $4
   do

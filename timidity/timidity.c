@@ -528,10 +528,6 @@ static inline FILE *open_pager(void);
 static inline void close_pager(FILE *);
 static void interesting_message(void);
 
-#ifdef IA_DYNAMIC
-MAIN_INTERFACE char dynamic_interface_id;
-#endif /* IA_DYNAMIC */
-
 extern StringTable wrd_read_opts;
 
 extern int SecondMode;
@@ -1223,7 +1219,11 @@ static char *expand_variables(char *string, MBlockList *varbuf, const char *base
     reuse_mblock(&varbuf); \
     close_file(tf); return 1; }
 
-MAIN_INTERFACE int read_config_file(char *name, int self)
+#define READ_CONFIG_SUCCESS        0
+#define READ_CONFIG_ERROR          1
+#define READ_CONFIG_RECURSION      2 /* Too much recursion */
+#define READ_CONFIG_FILE_NOT_FOUND 3 /* Returned only w. allow_missing_file */
+static int read_config_file(char *name, int self, int allow_missing_file)
 {
     struct timidity_file *tf;
     char buf[1024], *tmp, *w[MAXWORDS + 1], *cp;
@@ -1239,7 +1239,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self)
     {
 	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 		  "Probable source loop in configuration files");
-	return 2;
+	return READ_CONFIG_RECURSION;
     }
 
     if(self)
@@ -1248,9 +1248,10 @@ MAIN_INTERFACE int read_config_file(char *name, int self)
 	name = "(configuration)";
     }
     else
-	tf = open_file(name, 1, OF_VERBOSE);
+	tf = open_file(name, 1, allow_missing_file ? OF_NORMAL : OF_VERBOSE);
     if(tf == NULL)
-	return 1;
+	return allow_missing_file ? READ_CONFIG_FILE_NOT_FOUND :
+	                            READ_CONFIG_ERROR;
 
 	init_mblock(&varbuf);
 	if (!self)
@@ -2223,7 +2224,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self)
 	    for(i = 1; i < words; i++)
 		add_to_pathlist(w[i]);
 	}
-	else if(!strcmp(w[0], "source"))
+	else if(!strcmp(w[0], "source") || !strcmp(w[0], "trysource"))
 	{
 	    if(words < 2)
 	    {
@@ -2236,19 +2237,20 @@ MAIN_INTERFACE int read_config_file(char *name, int self)
 	    {
 		int status;
 		rcf_count++;
-		status = read_config_file(w[i], 0);
+		status = read_config_file(w[i], 0, !strcmp(w[0], "trysource"));
 		rcf_count--;
-		if(status == 2)
-		{
-		    reuse_mblock(&varbuf);
-		    close_file(tf);
-		    return 2;
-		}
-		else if(status != 0)
-		{
-
+		switch (status) {
+		case READ_CONFIG_SUCCESS:
+		    break;
+		case READ_CONFIG_ERROR:
 		    CHECKERRLIMIT;
 		    continue;
+		case READ_CONFIG_RECURSION:
+		    reuse_mblock(&varbuf);
+		    close_file(tf);
+		    return READ_CONFIG_RECURSION;
+		case READ_CONFIG_FILE_NOT_FOUND:
+		    break;
 		}
 	    }
 	}
@@ -2435,7 +2437,7 @@ MAIN_INTERFACE int read_config_file(char *name, int self)
     }
     reuse_mblock(&varbuf);
     close_file(tf);
-    return errcnt != 0;
+    return (errcnt == 0) ? READ_CONFIG_SUCCESS : READ_CONFIG_ERROR;
 }
 
 #ifdef SUPPORT_SOCKET
@@ -2486,58 +2488,40 @@ static int read_user_config_file(void)
 {
     char *home;
     char path[BUFSIZ];
-    int opencheck;
+    int status;
 
+    home = getenv("HOME");
 #ifdef __W32__
 /* HOME or home */
-    home = getenv("HOME");
     if(home == NULL)
 	home = getenv("home");
+#endif
     if(home == NULL)
     {
 	ctl->cmsg(CMSG_INFO, VERB_NOISY,
 		  "Warning: HOME environment is not defined.");
 	return 0;
     }
-/* .timidity.cfg or timidity.cfg */
+
+#ifdef __W32__
+/* timidity.cfg or _timidity.cfg or .timidity.cfg*/
     sprintf(path, "%s" PATH_STRING "timidity.cfg", home);
-    if((opencheck = open(path, 0)) < 0)
-    {
-	sprintf(path, "%s" PATH_STRING "_timidity.cfg", home);
-	if((opencheck = open(path, 0)) < 0)
-	{
-	    sprintf(path, "%s" PATH_STRING ".timidity.cfg", home);
-	    if((opencheck = open(path, 0)) < 0)
-	    {
-		ctl->cmsg(CMSG_INFO, VERB_NOISY, "%s: %s",
-			  path, strerror(errno));
-		return 0;
-	    }
-	}
-    }
+    status = read_config_file(path, 0, 1);
+    if (status != READ_CONFIG_FILE_NOT_FOUND)
+        return status;
 
-    close(opencheck);
-    return read_config_file(path, 0);
-#else
-    home = getenv("HOME");
-    if(home == NULL)
-    {
-	ctl->cmsg(CMSG_INFO, VERB_NOISY,
-		  "Warning: HOME environment is not defined.");
-	return 0;
-    }
+    sprintf(path, "%s" PATH_STRING "_timidity.cfg", home);
+    status = read_config_file(path, 0, 1);
+    if (status != READ_CONFIG_FILE_NOT_FOUND)
+        return status;
+#endif
+
     sprintf(path, "%s" PATH_STRING ".timidity.cfg", home);
+    status = read_config_file(path, 0, 1);
+    if (status != READ_CONFIG_FILE_NOT_FOUND)
+        return status;
 
-    if((opencheck = open(path, 0)) < 0)
-    {
-	ctl->cmsg(CMSG_INFO, VERB_NOISY, "%s: %s",
-		  path, strerror(errno));
-	return 0;
-    }
-
-    close(opencheck);
-    return read_config_file(path, 0);
-#endif /* __W32__ */
+    return 0;
 }
 
 MAIN_INTERFACE void tmdy_free_config(void)
@@ -2701,16 +2685,16 @@ MAIN_INTERFACE int set_tim_opt_short(int c, char *optarg)
 	return 0;
 }
 
+#ifdef __W32__
 MAIN_INTERFACE int set_tim_opt_short_cfg(int c, char *optarg)
 {
-	int err = 0;
-	
 	switch (c) {
 	case 'c':
 		return parse_opt_c(optarg);
 	}
 	return 0;
 }
+#endif
 
 /* -------- getopt_long -------- */
 MAIN_INTERFACE int set_tim_opt_long(int c, char *optarg, int index)
@@ -2950,6 +2934,7 @@ MAIN_INTERFACE int set_tim_opt_long(int c, char *optarg, int index)
 	}
 }
 
+#ifdef __W32__
 MAIN_INTERFACE int set_tim_opt_long_cfg(int c, char *optarg, int index)
 {
 	const struct option *the_option = &(longopts[index]);
@@ -2968,6 +2953,7 @@ MAIN_INTERFACE int set_tim_opt_long_cfg(int c, char *optarg, int index)
 		return parse_opt_c(arg);
 	}
 }
+#endif
 
 static inline int parse_opt_A(const char *arg)
 {
@@ -3031,7 +3017,7 @@ static inline int parse_opt_c(char *arg)
 	if (got_a_configuration == 1)
 		return 0;
 #endif
-	if (read_config_file(arg, 0))
+	if (read_config_file(arg, 0, 0))
 		return 1;
 	got_a_configuration = 1;
 	return 0;
@@ -3918,7 +3904,7 @@ static int parse_opt_h(const char *arg)
 			if (*(strchr(h, '%') + 1) != '%')
 				fprintf(fp, h, help_args[j++]);
 			else
-				fprintf(fp, h);
+				fprintf(fp, "%s", h);
 		} else
 			fputs(h, fp);
 		fputs(NLS, fp);
@@ -4013,22 +3999,14 @@ static int parse_opt_h(const char *arg)
 	fputs(NLS, fp);
 	fputs("Available interfaces (-i, --interface option):" NLS, fp);
 	for (cmpp = ctl_list; (cmp = *cmpp) != NULL; cmpp++)
-#ifdef IA_DYNAMIC
-		if (cmp->id_character != dynamic_interface_id)
-			fprintf(fp, "  -i%c          %s" NLS,
-					cmp->id_character, cmp->id_name);
-#else
 		fprintf(fp, "  -i%c          %s" NLS,
 				cmp->id_character, cmp->id_name);
-#endif	/* IA_DYNAMIC */
 #ifdef IA_DYNAMIC
 	fprintf(fp, "Supported dynamic load interfaces (%s):" NLS,
 			dynamic_lib_root);
 	memset(mark, 0, sizeof(mark));
 	for (cmpp = ctl_list; (cmp = *cmpp) != NULL; cmpp++)
 		mark[(int) cmp->id_character] = 1;
-	if (dynamic_interface_id != 0)
-		mark[(int) dynamic_interface_id] = 0;
 	list_dyna_interface(fp, dynamic_lib_root, mark);
 #endif	/* IA_DYNAMIC */
 	fputs(NLS, fp);
@@ -4099,7 +4077,7 @@ static inline void list_dyna_interface(FILE *fp, char *path, char *mark)
 {
     URL dir;
     char fname[NAME_MAX];
-    int cwd;
+    int cwd, dummy;
 	if ((dir = url_dir_open(path)) == NULL)
 		return;
 	cwd = open(".", 0);
@@ -4108,35 +4086,35 @@ static inline void list_dyna_interface(FILE *fp, char *path, char *mark)
 	while (url_gets(dir, fname, sizeof(fname)) != NULL)
 		if (strncmp(fname, "if_", 3) == 0) {
 			void* handle = NULL;
-			if(handle = dl_load_file(fname)) {
-				ControlMode *(* loader)(void);
-				char c = CHAR_MAX;
-				loader = NULL;
-				do {
+			char path[NAME_MAX];
+			snprintf(path, NAME_MAX, ".%c%s", PATH_SEP, fname);
+			if((handle = dl_load_file(path))) {
+				ControlMode *(* loader)(void) = NULL;
+				char c;
+				for (c = 'A'; c <= 'z'; c++) {
 					char buf[20]; /* enough */
-					if(mark[c]) continue;
+					if(mark[(int)c]) continue;
 					sprintf(buf, "interface_%c_loader", c);
-					if(loader = dl_find_symbol(handle, buf)) {
+					if((loader = dl_find_symbol(handle, buf))) {
 						fprintf(fp, "  -i%c          %s" NLS, c, loader()->id_name);
-						mark[c] = 1;
-						goto cleanup;
+						mark[(int)c] = 1;
+						break;
 					}
-				} while (--c != CHAR_MAX); /* round-trip detection */
-			cleanup:
+				}
 				dl_free(handle);
 			}
 		}
-	fchdir(cwd);
-	close(cwd);
+	dummy = fchdir(cwd);
+	dummy += close(cwd);
 	url_close(dir);
 }
 
 ControlMode *dynamic_interface_module(int id_char)
 {
 	URL url;
-	char fname[BUFSIZ], name[16], *info;
+	char fname[BUFSIZ];
 	ControlMode *ctl = NULL;
-	int cwd;
+	int cwd, dummy;
 	void *handle;
 	ControlMode *(* inferface_loader)(void);
 
@@ -4150,7 +4128,7 @@ ControlMode *dynamic_interface_module(int id_char)
 			char path[NAME_MAX], buff[20];
 			snprintf(path, NAME_MAX-1, ".%c%s", PATH_SEP, fname);
 			if((handle = dl_load_file(path)) == NULL)
-				return NULL;
+				continue;
 			sprintf(buff, "interface_%c_loader", id_char);
 			if((inferface_loader = dl_find_symbol(handle, buff)) == NULL) {
 				dl_free(handle);
@@ -4161,8 +4139,8 @@ ControlMode *dynamic_interface_module(int id_char)
 				break;
 		}
 	}
-	fchdir(cwd);
-	close(cwd);
+	dummy = fchdir(cwd);
+	dummy += close(cwd);
 	url_close(url);
 	return ctl;
 }
@@ -4171,9 +4149,8 @@ ControlMode *dynamic_interface_module(int id_char)
 static inline int parse_opt_i(const char *arg)
 {
 	/* interface mode */
-	ControlMode *cmp, **cmpp, *cmp2, **cmpp2;
+	ControlMode *cmp, **cmpp;
 	int found = 0;
-	char name[16] = "\0";
 	
 	for (cmpp = ctl_list; (cmp = *cmpp) != NULL; cmpp++) {
 		if (cmp->id_character == *arg) {
@@ -4186,17 +4163,16 @@ static inline int parse_opt_i(const char *arg)
 #endif	/* IA_W32GUI */
 			break;
 		}
-#ifdef IA_DYNAMIC
-		if (cmp->id_character == dynamic_interface_id) {
-			cmp = dynamic_interface_module(*arg);
-			if(cmp) {
-				ctl = cmp;
-				found = 1;
-				break;
-			}
-		}
-#endif	/* IA_DYNAMIC */
 	}
+#ifdef IA_DYNAMIC
+	if (! found) {
+		cmp = dynamic_interface_module(*arg);
+		if(cmp) {
+			ctl = cmp;
+			found = 1;
+		}
+	}
+#endif	/* IA_DYNAMIC */
 	if (! found) {
 		ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
 				"Interface `%c' is not compiled in.", *arg);
@@ -5145,16 +5121,17 @@ static void interesting_message(void)
 static RETSIGTYPE sigterm_exit(int sig)
 {
     char s[4];
+    ssize_t dummy;
 
     /* NOTE: Here, fprintf is dangerous because it is not re-enterance
      * function.  It is possible coredump if the signal is called in printf's.
      */
 
-    write(2, "Terminated sig=0x", 17);
+    dummy = write(2, "Terminated sig=0x", 17);
     s[0] = "0123456789abcdef"[(sig >> 4) & 0xf];
     s[1] = "0123456789abcdef"[sig & 0xf];
     s[2] = '\n';
-    write(2, s, 3);
+    dummy += write(2, s, 3);
 
     safe_exit(1);
 }
@@ -5312,7 +5289,7 @@ MAIN_INTERFACE int timidity_pre_load_configuration(void)
     if((check = open(local, 0)) >= 0)
     {
 	close(check);
-	if(!read_config_file(local, 0)) {
+	if(!read_config_file(local, 0, 0)) {
 	    got_a_configuration = 1;
 		return 0;
 	}
@@ -5332,7 +5309,7 @@ MAIN_INTERFACE int timidity_pre_load_configuration(void)
 	    if((check = open(local, 0)) >= 0)
 	    {
 		close(check);
-		if(!read_config_file(local, 0)) {
+		if(!read_config_file(local, 0, 0)) {
 		    got_a_configuration = 1;
 			return 0;
 		}
@@ -5347,7 +5324,7 @@ MAIN_INTERFACE int timidity_pre_load_configuration(void)
     if((check = open(local, 0)) >= 0)
     {
 	close(check);
-	if(!read_config_file(local, 0)) {
+	if(!read_config_file(local, 0, 0)) {
 	    got_a_configuration = 1;
 		return 0;
 	}
@@ -5358,7 +5335,7 @@ MAIN_INTERFACE int timidity_pre_load_configuration(void)
 
 #else
     /* UNIX */
-    if(!read_config_file(CONFIG_FILE, 0))
+    if(!read_config_file(CONFIG_FILE, 0, 0))
 		got_a_configuration = 1;
 #endif
 
@@ -5367,16 +5344,41 @@ MAIN_INTERFACE int timidity_pre_load_configuration(void)
      * Please setup each user preference in $HOME/.timidity.cfg
      * (or %HOME%/timidity.cfg for DOS)
      */
+    if(read_user_config_file()) {
+	ctl->cmsg(CMSG_ERROR, VERB_NORMAL,
+		  "Error: Syntax error in ~/.timidity.cfg");
+	return 1;
+    }
 
-    if(read_user_config_file())
-	ctl->cmsg(CMSG_INFO, VERB_NOISY,
-		  "Warning: Can't read ~/.timidity.cfg correctly");
     return 0;
 }
 
 MAIN_INTERFACE int timidity_post_load_configuration(void)
 {
     int i, cmderr = 0;
+
+    /* If we're going to fork for daemon mode, we need to fork now, as
+       certain output libraries (pulseaudio) become unhappy if initialized
+       before forking and then being used from the child. */
+    if (ctl->id_character == 'A' && (ctl->flags & CTLF_DAEMONIZE))
+    {
+	int pid = fork();
+	FILE *pidf;
+	switch (pid)
+	{
+	    case 0:		// child is the daemon
+		break;
+	    case -1:		// error status return
+		exit(7);
+	    default:		// no error, doing well
+		if ((pidf = fopen( "/var/run/timidity.pid", "w" )) != NULL )
+		{
+		    fprintf( pidf, "%d\n", pid );
+		    fclose( pidf );
+		}
+		exit(0);
+	}
+    }
 
     if(play_mode == &null_play_mode)
     {
@@ -5430,7 +5432,7 @@ MAIN_INTERFACE int timidity_post_load_configuration(void)
 
     if(!got_a_configuration)
     {
-	if(try_config_again && !read_config_file(CONFIG_FILE, 0))
+	if(try_config_again && !read_config_file(CONFIG_FILE, 0, 0))
 	    got_a_configuration = 1;
     }
 
@@ -5443,7 +5445,7 @@ MAIN_INTERFACE int timidity_post_load_configuration(void)
 	{
 	    for(i = 0; config_string_list[i]; i++)
 	    {
-		if(!read_config_file(config_string_list[i], 1))
+		if(!read_config_file(config_string_list[i], 1, 0))
 		    got_a_configuration = 1;
 		else
 		    cmderr++;
@@ -5738,7 +5740,7 @@ int main(int argc, char **argv)
 	int c, err, i;
 	int nfiles;
 	char **files;
-	char *files_nbuf;
+	char *files_nbuf = NULL;
 	int main_ret;
 	int longind;
 #if defined(DANGEROUS_RENICE) && !defined(__W32__) && !defined(main)
@@ -5783,15 +5785,11 @@ int main(int argc, char **argv)
 #endif
 #ifdef IA_DYNAMIC
 {
-#ifdef XP_UNIX
-	argv[0] = "netscape";
-#endif /* XP_UNIX */
 	dynamic_lib_root = safe_strdup(SHARED_LIB_PATH);
-	dynamic_interface_id = 0;
 	dl_init(argc, argv);
 }
 #endif /* IA_DYNAMIC */
-	if (program_name = pathsep_strrchr(argv[0]))
+	if ((program_name = pathsep_strrchr(argv[0])))
 		program_name++;
 	else
 		program_name = argv[0];

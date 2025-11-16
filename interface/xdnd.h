@@ -24,7 +24,7 @@
 #ifndef _HAVE_DND_H
 #define _HAVE_DND_H
 
-#include <X11/IntrinsicP.h>
+#include <X11/Xlib.h>
 
 #define _XA_XdndAware Atoms[0]
 #define _XA_XdndEnter Atoms[1]
@@ -42,7 +42,7 @@
 
 #define MAX_SUPPORTED_TYPE 2
 
-typedef void (*dnd_callback_t) (char *);
+typedef void (*dnd_callback_t) (const char *);
 
 typedef struct {
   Display             *display;
@@ -62,7 +62,7 @@ typedef struct {
   Atom                 Atoms[_XA_ATOMS_COUNT];
   Atom                 supported[MAX_SUPPORTED_TYPE];
   Atom                 version;
-  Boolean              in_progress;
+  Bool                 in_progress;
 } DndClass;
 
 /* header was ripped from xdnd's example on its page */

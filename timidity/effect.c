@@ -35,8 +35,9 @@
 #include <strings.h>
 #endif
 
+#include <stdlib.h>
+
 #include "mt19937ar.h"
-#define RAND_MAX 0xffffffff
 
 #include "timidity.h"
 #include "instrum.h"

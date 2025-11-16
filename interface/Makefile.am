@@ -18,7 +18,7 @@
 
 include $(top_srcdir)/common.makefile.in
 
-SUFFIXES = .ptcl .tcl .@so@
+SUFFIXES = .ptcl .tcl .pel .el .@so@
 
 SUBDIRS = motif_bitmaps bitmaps pixmaps
 
@@ -53,6 +53,7 @@ EXTRA_libinterface_a_SOURCES = \
 	x_trace.c \
 	x_trace.h \
 	xaw.h \
+	xaw_p.h \
 	xaw_c.c \
 	xaw_i.c \
 	xaw_redef.c \
@@ -74,7 +75,6 @@ EXTRA_libinterface_a_SOURCES = \
 	VTparse.h \
 	x_mag.c \
 	x_mag.h \
-	dynamic_c.c \
 	mac_c.c \
 	mac_c.h \
 	mac_mag.c \
@@ -155,10 +155,6 @@ WRD_WINCON_OBJS = wrdt_wcon.$(OBJEXT)
 endif
 endif
 
-if NEEDDLOPEN
-DYNAMIC_OBJS = dynamic_c.$(OBJEXT)
-endif
-
 if ENABLE_SOUND_SPEC
 SOUND_SPEC_OBJS = \
 	soundspec.$(OBJEXT)
@@ -178,7 +174,6 @@ libinterface_LIBADD = \
 	$(INTERFACE_OBJS) \
 	$(WRD_OBJS) \
 	$(WRD_WINCON_OBJS) \
-	$(DYNAMIC_OBJS) \
 	$(SOUND_SPEC_OBJS)
 	
 libinterface_a_LIBADD=$(libinterface_LIBADD)
@@ -245,11 +240,13 @@ EXTRA_DIST = \
 	tkpanel.tcl \
 	browser.tcl \
 	misc.tcl \
-	timidity.el \
+	timidity.pel \
 	tclIndex
 
 .ptcl.tcl:
 	sed -e 's@%TCL_DIR%@$(TCL_DIR)@g' $< > $@
+.pel.el:
+	sed -e 's@%BIN_DIR%@$(bindir)@g' $< > $@
 clean:
 	rm -f tkmidity.tcl
 	rm -f *.$(OBJEXT)

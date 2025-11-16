@@ -76,9 +76,6 @@
 /* Define to 1 if you have the `getpagesize' function. */
 #undef HAVE_GETPAGESIZE
 
-/* Define to 1 if you have the `getpid' function. */
-#undef HAVE_GETPID
-
 /* Define to 1 if you have the `gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
@@ -117,6 +114,9 @@
 
 /* Define to 1 if you have the `X11' library (-lX11). */
 #undef HAVE_LIBX11
+
+/* Define to 1 if you have the 'Xft' library. */
+#undef HAVE_LIBXFT
 
 /* Define to 1 if you have the `xpg4' library (-lxpg4). */
 #undef HAVE_LIBXPG4
@@ -469,7 +469,7 @@
 /* Define to 1 if you need wrd support for X. */
 #undef WRDT_X
 
-/* Define to 1 if you have libXaw3d. */
+/* Define to 1 if you use libXaw3d. */
 #undef XAW3D
 
 /* Define to 1 if you use libXawPlus. */

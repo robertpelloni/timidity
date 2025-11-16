@@ -49,7 +49,7 @@ static int _is_atom_match(DndClass *xdnd, Atom **atom) {
   int i, j;
   
   for(i = 0; (*atom)[i] != 0; i++) {
-    for(j = 0; j <= MAX_SUPPORTED_TYPE; j++) {
+    for(j = 0; j < MAX_SUPPORTED_TYPE; j++) {
       if((*atom)[i] == xdnd->supported[j])
 	return i;
     }
@@ -92,7 +92,6 @@ static void unescape_string(char *src, char *dest) {
   if(!strlen(src))
     return;
 
-  memset(dest, 0, sizeof(dest));
   s = src;
   d = dest;
 
@@ -127,8 +126,8 @@ static void unescape_string(char *src, char *dest) {
 /*
  * WARNING: X unlocked function 
  */
-static int _dnd_paste_prop_internal(DndClass *xdnd, Window from, 
-				    Window insert, Atom prop, Boolean delete_prop) {
+static int _dnd_paste_prop_internal(DndClass *xdnd, Window from, Window insert,
+				    Atom prop, Bool delete_prop) {
   long           nread;
   unsigned long  nitems;
   unsigned long  bytes_after;
@@ -213,7 +212,6 @@ static int _dnd_paste_prop_internal(DndClass *xdnd, Window from,
 static void _dnd_get_selection (DndClass *xdnd, Window from, Atom prop,
                                 Window insert) {
   struct timeval  tv, tv_start;
-  long            nread;
   unsigned long   bytes_after;
   Atom            actual_type;
   int             actual_fmt;
@@ -222,8 +220,6 @@ static void _dnd_get_selection (DndClass *xdnd, Window from, Atom prop,
 
   if((xdnd == NULL) || (prop == None))
     return;
-
-  nread = 0;
 
   XLockDisplay(xdnd->display);
   if(XGetWindowProperty(xdnd->display, insert, prop, 0, 8, False, AnyPropertyType, 
@@ -546,7 +542,7 @@ int process_client_dnd_message(DndClass *xdnd, XEvent *event) {
 #ifdef DEBUG_DND
       printf("XdndDrop\n");
 #endif
-      if((xdnd->dragger_window == XDND_DROP_SOURCE_WIN(event))) {
+      if(xdnd->dragger_window == XDND_DROP_SOURCE_WIN(event)) {
 
       if(xdnd->desired != 0) {
 
@@ -579,7 +575,7 @@ int process_client_dnd_message(DndClass *xdnd, XEvent *event) {
     }
     else if(event->xclient.message_type == xdnd->_XA_XdndPosition) {
       XEvent  xevent;
-      Window  parent, child, toplevel, new_child;
+      Window  parent, child, new_child;
 
 #ifdef DEBUG_DND
       printf("XdndPosition\n");
@@ -587,7 +583,9 @@ int process_client_dnd_message(DndClass *xdnd, XEvent *event) {
 
       XLockDisplay(xdnd->display);
 
+#if 0
       toplevel = event->xany.window;
+#endif
       parent   = DefaultRootWindow(xdnd->display);
       child    = xdnd->dropper_toplevel;
 

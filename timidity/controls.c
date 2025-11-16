@@ -24,6 +24,11 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif /* HAVE_UNISTD_H */
+
 #include "interface.h"
 #include "timidity.h"
 #include "controls.h"
@@ -84,13 +89,6 @@ extern ControlMode dumb_control_mode;
 #  define DEFAULT_CONTROL_MODE &slang_control_mode
 # endif
 #endif
-
-#ifdef IA_DYNAMIC
-  extern ControlMode dynamic_control_mode;
-# ifndef DEFAULT_CONTROL_MODE
-#  define DEFAULT_CONTROL_MODE &dynamic_control_mode
-# endif
-#endif /* IA_DYNAMIC */
 
 #ifdef IA_EMACS
   extern ControlMode emacs_control_mode;
@@ -213,9 +211,6 @@ ControlMode *ctl_list[]={
 #endif /* IA_W32GUI */
 #if !defined(__MACOS__)  && !defined(IA_W32GUI) && !defined(IA_W32G_SYN)
 	&dumb_control_mode,
-#endif
-#ifdef IA_DYNAMIC
-  &dynamic_control_mode,
 #endif
 #ifdef IA_PLUGIN
   &plugin_control_mode,
